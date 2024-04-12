@@ -1,0 +1,442 @@
+---
+title: "Data Analysis Replication Assignment"
+author: "Amber Kearns"
+date: "April 8"
+editor: source
+---
+
+## Preliminaries
+
+Before beginning this project, run the following chunks:
+```{r}
+# the following list of packages will need to be activated for this project
+library(tidyverse)
+library(knitr)
+library(skimr)
+library (cowplot)
+```
+
+## Introduction
+
+This paper addresses the use of environmental DNA for detection of larva in artifical water sources for 
+*An. stephensi* and *Ae. aegypti*. These two species of mosquitoes are known carries of malaria and are posing a rising threat with their spread into the Horn of Africa. The study demonstrate that both species leave detectable eDNA with the presence of at least one larva in 1L of water at a remarkably stable level for up to 2 weeks. The paper analyzes the efficacy of a primer designed to detect these two species, and then uses it to see how the number of larva affects the level of detectable DNA. Additionally, they look at the rate of eDNA degradation in artificial breeding sites, and successfully attempt to identify insecticide resistant genes from eDNA in these sites. Ultimately, this study is the first step towards developing proposed methods of malarial prevention and management in the areas that are being newly exposed to *An. stephensi* and *Ae. aegypti*.
+
+I plan to replicate: **LIST THAT HERE**
+
+## Visualization of Data
+
+To begin, pull in the data. I separated each of the data tabs in the full supplement into separate CSV files; if you wish to view the full file, it is available in the git directory. Additionally, I edited the data somewhat to prevent issues with the files, such as heading rows being midway through the data set. 
+```{r}
+f <- "https://raw.githubusercontent.com/electrickearns/data-analysis-replication/main/data/data_exp1.csv"
+d1 <- read_csv (f, col_names = TRUE, show_col_types = FALSE)
+
+f <- "https://raw.githubusercontent.com/electrickearns/data-analysis-replication/main/data/data_exp2.csv"
+d2 <- read_csv (f, col_names = TRUE, show_col_types = FALSE)
+
+f <- "https://raw.githubusercontent.com/electrickearns/data-analysis-replication/main/data/data_exp3.csv"
+d3 <- read_csv (f, col_names = TRUE, show_col_types = FALSE)
+
+f <- "https://raw.githubusercontent.com/electrickearns/data-analysis-replication/main/data/data_standard_curves.csv"
+s <- read_csv (f, col_names = TRUE, show_col_types = FALSE)
+```
+
+#### Dataframe s exploration. 
+Dataframe s contains the data from experiments estimating the analytic sensitivity and linearity of the qPCR assay and developed primer for eDNA detection of both *An. stephensi* and *Ae. aegypt* from a series of serial dilutions. The fluorescent primer (Fluor), sample number (Sample), cycle threshold (Cq), standard concentration (SQ), and targeted species are recorded (Target). This data will be used to replicate several graphs.
+Let's explore the data a bit!
+
+```{r}
+head (s)
+# we need to adjust s to no longer show "no CT" when the CT was undetectable. The Cq line is also reading as a character line instead of numeric, so we have to adjust it to read as numeric.
+is.na(s) <- s == "No Ct"
+summ_s <- s%>%
+  drop_na (Cq) %>%
+  mutate (Cq = as.numeric(Cq)) %>%
+  summarize (n = n(),
+    mean (Cq),
+    mean (SQ),
+    sd= sd(Cq),
+    se= sd/sqrt(n))
+
+summ_s
+```
+
+#### Dataframe d1 and d2 exploration. 
+After the experiments that yielded dataframe s confirmed the validity of the PCR primer, two further experiments were done to test the sensitivity of the detection of these two vectors from environmental DNA. Artificial breeding sites with known numbers of larvae were created at 50 ml (d1) and 1 L (d2) with increasing levels of density. Both of these dataframes were used in the paper to calculate the average CT values for each larval density, along with the 95% confidence interval of this average. 
+
+Let us explore each! We will save the calculating by each larval density for the replication section. We will start with d1, the 50ml experiment:
+
+```{r}
+head (d1)
+# we need to adjust s to no longer show "no CT" when the CT was undetectable, like the above. Additionally, all NAs must be dropped, and the PCR replicate columns adjusted to numeric.
+is.na(d1) <- d1 == "No Ct"
+summ_d1 <- d1 %>%
+  drop_na (`qPCR Replicate 1`) %>%
+  drop_na (`qPCR Replicate 2`) %>%
+   drop_na (`qPCR Replicate 3`) %>%
+  mutate (`qPCR Replicate 1` = as.numeric(`qPCR Replicate 1`),
+          `qPCR Replicate 2` = as.numeric(`qPCR Replicate 2`),
+          `qPCR Replicate 3` = as.numeric(`qPCR Replicate 3`)) %>%
+  summarize (n = n(),
+    mean (`qPCR Replicate 1`),
+    mean (`qPCR Replicate 2`),
+    mean (`qPCR Replicate 3`),
+    sd1= sd(`qPCR Replicate 1`),
+    sd2= sd(`qPCR Replicate 2`),
+    sd3= sd(`qPCR Replicate 3`),
+    se1= sd1/sqrt(n),
+    se2= sd2/sqrt(n),
+    se3= sd3/sqrt(n))
+
+summ_d1
+```
+
+And then the same for d2, the 1L experiment.
+```{r}
+head (d2)
+# we need to adjust s to no longer show "no CT" when the CT was undetectable, like the above. Additionally, all NAs must be dropped!
+is.na(d2) <- d2 == "No Ct"
+summ_d2 <- d2 %>%
+  drop_na (`qPCR Replicate 1`) %>%
+  drop_na (`qPCR Replicate 2`) %>%
+   drop_na (`qPCR Replicate 3`) %>%
+  mutate (`qPCR Replicate 1` = as.numeric(`qPCR Replicate 1`),
+          `qPCR Replicate 2` = as.numeric(`qPCR Replicate 2`),
+          `qPCR Replicate 3` = as.numeric(`qPCR Replicate 3`)) %>%
+  summarize (n = n(),
+    mean (`qPCR Replicate 1`),
+    mean (`qPCR Replicate 2`),
+    mean (`qPCR Replicate 3`),
+    sd1= sd(`qPCR Replicate 1`),
+    sd2= sd(`qPCR Replicate 2`),
+    sd3= sd(`qPCR Replicate 3`),
+    se1= sd1/sqrt(n),
+    se2= sd2/sqrt(n),
+    se3= sd3/sqrt(n))
+
+summ_d2
+```
+
+#### Dataframe d3 exploration. 
+
+Finally, d3 is data from their final experiment, measuring the rate of environmental DNA degradation of *An. stephensi* in artificial breeding sites over time.They monitored the 1L artificial breeding sites for 2 weeks and captured the Ct values every 24 hours. After 312 hours (13 days), there were no detectabled levels of *An. stephensi*.
+
+Let us explore this data briefly. It will be used in data replication to replicate a simple bar graph.
+```{r}
+head (d3)
+# we need to adjust s to no longer show "no CT" when the CT was undetectable, like the above. Additionally, all NAs must be dropped!
+is.na(d3) <- d3 == "No Ct"
+summ_d3 <- d3 %>%
+  drop_na (`qPCR Replicate 1`) %>%
+  drop_na (`qPCR Replicate 2`) %>%
+   drop_na (`qPCR Replicate 3`) %>%
+  mutate (`qPCR Replicate 1` = as.numeric(`qPCR Replicate 1`),
+          `qPCR Replicate 2` = as.numeric(`qPCR Replicate 2`),
+          `qPCR Replicate 3` = as.numeric(`qPCR Replicate 3`)) %>%
+  summarize (n = n(),
+    mean (`qPCR Replicate 1`),
+    mean (`qPCR Replicate 2`),
+    mean (`qPCR Replicate 3`),
+    sd1= sd(`qPCR Replicate 1`),
+    sd2= sd(`qPCR Replicate 2`),
+    sd3= sd(`qPCR Replicate 3`),
+    se1= sd1/sqrt(n),
+    se2= sd2/sqrt(n),
+    se3= sd3/sqrt(n))
+
+summ_d3
+```
+
+
+## Statistical Replications/Reanalysis
+
+I will now replicate the data analytics done in this paper to the best of my ability. I am starting with the last bit of data in the paper, the eDNA degredation, and working backwards, simply due to wanting to tackle these in order of presumed difficulty. Each section will show the initial data, graph when applicable, then how I would code for this data.
+
+### 1) Rate of *An. stephensi* eDNA degradation in artificial breeding sites
+
+In this section, the level of environmental eDNA degradation was measured.As in the above, they reported the numbers for mean and CI in text, and created a graph, and we will too. The experiment was done with three 1L artificial breeding sites with each containing 32 specimens in the pupa stage. 
+```{r}
+#| echo: false
+#| out-width: 200px
+knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Figure%204_data.PNG")
+```
+```{r}
+#| echo: false
+#| out-width: 200px
+knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Figure%204.PNG")
+```
+
+Our earlier exploration already started off the process by removing all "No Ct" observations and replacing them with NA; if you skipped this step, please go complete it now. 
+I start by trimming the data to remove all NAs. The NAs come from experiments that produced no CT numbers, either through being controls with no pupae present or by being past the hours where detection is possible. These NAs are not represented in the original data or graphs. 
+
+```{r}
+d3_results <- d3 %>%
+  drop_na(`qPCR Replicate 1`) %>%
+  drop_na(`qPCR Replicate 2`) %>%
+  drop_na(`qPCR Replicate 3`) 
+```
+Now, I have to calculate the mean of the three replicate qPCR tests across the three sample sites. To begin this process, I created an additional column that is the mean of the three replicates. I did this because I was not sure how else to best take a mean across both rows and columns of data; to simplify, I created a new column with the means of the rows already calculated, and then, in the next step, use those columns to calculate the final mean values.
+
+The qPCR results were coming through as characters, so I had to adjust them to be numeric as well. This can be done inside or outside piping. Because we did a similar process above in piping, I chose to do this one outside for variety. To create the mean, I simply added the three together, and, since there are no NAs, divided by 3.
+
+```{r}
+d3_results$`qPCR Replicate 1` <- as.numeric(d3_results$`qPCR Replicate 1`)
+d3_results$`qPCR Replicate 2` <- as.numeric (d3_results$`qPCR Replicate 2`)
+d3_results$`qPCR Replicate 3` <- as.numeric (d3_results$`qPCR Replicate 3`)
+d3_results$totalCT <- ((d3_results$`qPCR Replicate 1` + d3_results$`qPCR Replicate 2` + d3_results$`qPCR Replicate 3`) / 3 )
+```
+
+After creating a column averaging the results for the three iterations, I had to find the mean of those results with the results of the other two controlled environments. For this, I created a vector for the results, d3_summ, piped the d3_results data to it. I used `group_by()` to ask the function to calculate the results for multiple rows sharing the same `Hours in Water` to allow for calculation of mean across multiple tests. I then used the summarize function to create a lovely table of the means for each 24 hour measurement. Additionally, I calculated the sd and se for these for use later. The paper reports four significant figures, so I did as well using the `mutate_if ()` function. 
+
+```{r}
+#This code creates the summary table that includes the mean, standard deviation (sd) and standard error (se)
+d3_summ <- d3_results %>% 
+  group_by(`Hours in Water`) %>% 
+  summarize (n = n(),
+    mean= mean(totalCT),
+     sd= sd(totalCT),
+    se = sd/sqrt(n))
+#the mutate_if function was no behaving when nested in the same piping as the above, so I separated it.
+d3_summ <- d3_summ %>%
+  mutate_if(is.numeric, signif, digits=4) 
+
+d3_summ
+```
+
+Now I need to do a bit more calculations of the same type to find the 95% CI for each. You must use `reframe ()` instead of `summarize()` because you are making two values per calculation.
+
+```{r}
+alpha <- 0.05 #alpha is 1-((percentCI)/100), or, since we want a 95% interval, 1-(95/100)
+d3_CI <- d3_summ %>% 
+   reframe (n = n(),
+              ci <- mean + c(-1, 1) * qnorm(1 - alpha/2) * se, .by=`Hours in Water`)
+
+d3_CI
+```
+
+As you can see, these CIs are close, but not equivalent to those in the paper. At first, I thought perhaps it was because I condensed the three results per row into one, making the length different of the mean vector. So I extended it by simply creating a vector that held all nine results taken at the 24 hour mark, then calculating the CI for those. It was also close, but not quite identical. However, it was much closer, within less than .2!
+
+```{r}
+test <- c(26.69, 26.43, 26.22, 29.82, 29.83, 29.93, 30.18, 30.52, 30.41)
+test_sd <- sd(test)
+test_se <- test_sd/sqrt(length(test))
+test_mean <- mean(test)
+test_ci <- test_mean + c(-1, 1) * qnorm(1 - alpha/2) * test_se
+
+test_ci
+```
+
+Since my means are identical to theirs, but not my 95 % CI, it stands to reason the difference is in the standard error. Knowing there is nothing wrong with the se formula points to a potential difference in the standard deviation. To test my own sd calculation, I used the `skim ()` function to see the sd generated in it. 
+```{r}
+skimtest <- d3_results %>%  
+  group_by(`Hours in Water`) %>% 
+  skim(totalCT)
+
+skimtest
+```
+
+Again, my mean matches the paper, but the sd matches the sd calculated earlier, which did not yield the correct CI. I tried a few other calculations of CI, but was unable to yield the correct results. Some others tried:
+ - creating and using function: CI = function(x, level = 0.95) {
+    alpha <- 1 - level
+    ci = mean(x) + c(-1, 1) * qnorm(1 - (alpha/2)) * sqrt(var(x)/length(x))
+    return(ci)
+  - (lower <- qnorm(alpha/2, m, se)) // (upper <- qnorm(1 - alpha/2, m, se)) where m is the mean. I used the mean and SE derived from d3_summ. 
+  
+Having failed to exactly replicate the CI, I turned towards creating the graph.Awkwardly, they named the x-axis "time left to degrade" which could be read as "time left to degrade before experiment ends" OR "time left alone in the pool to degrade on its own." In this case, the latter is correct. I chose to use {ggplot}, because generally I find it easier to edit. Although I cannot visually show this, I find it easiest to do ggplot one step at a time, testing at each step. For example, I start with just the data, aes, and geom_col, test to see that works. From there, I add the xlab and ylab to change the labels on the axis, then check again, and so on. I used scale_x_continuous to force the x axis to show every 24 hours as a label. theme_classic() removes the grid, while geom_errorbar adds in the confidence intervals. I could not imitate the shape of theirs. 
+
+
+```{r}
+
+d3plot <- ggplot (data=d3_summ, aes (x=`Hours in Water`, y= mean, fill= `Hours in Water`)) + geom_col() + xlab ("Time Left to Degrade (HR)") + ylab ("Ct Value") + scale_x_continuous(breaks=c(24,48,72,96,120,144,168,192,216,240,264,288)) + geom_errorbar(aes(x=`Hours in Water`, ymin=mean-sd, ymax=mean+sd), width=0.2, colour="black", size=1.3) + theme_classic()
+
+d3plot
+```
+
+To add the colors, I went back to my aesthetics outlining in the ggplot function and asked it to color each bar by `Hours in Water` to make each bar a unique color. I then added a command asking it to use my color scheme, created in a vector, which I got close as possible to the original graph by using an eyedropper tool to pull the hex codes. I will show the code, but it did not work, so will not be rendered:
+```
+my_colors <- c("#8db0db", "#b39eda", "#eeaaee", "#3367a1","#63419f", "#a3329e", "#339bbb", "#521b91", "#931650", "#000000", "#919191", "#935351")
+
+d3plot <- ggplot (data=d3_summ, aes (x=`Hours in Water`, y= mean, fill= `Hours in Water`)) + geom_col() + xlab ("Time Left to Degrade (HR)") + ylab ("Ct Value") + scale_x_continuous(breaks=c(24,48,72,96,120,144,168,192,216,240,264,288)) + scale_fill_manual(values = my_colors)
+
+#unfortunately, this code does NOT work due to a conflict between scale_x_continuous and scale_fill_manual. The scale on the x-axis felt more important to maintain than the original colors. 
+```
+
+### 2) Detection of *An. stephensi* and *Ae. aegypti* eDNA in artificial breeding sites
+
+These two experiments tested to see the CT, or cycle threshold, of both species in artificial breeding sites with a known and controlled number of larvae to create an estimate of how sensitive the detection of the presence of these larvae was. The results (the mean CT and the 95% confidence interval at each count of larvae) are summarized in text, then represented in a graph. We will replicate both for both the 50 ml experiment and the 1L experiment.
+
+#### 2a) 50 ml (Experiment 1)
+```{r}
+#| echo: false
+#| out-width: 200px
+knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Fig%202_data.PNG")
+```
+```{r}
+#| echo: false
+#| out-width: 200px
+knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Fig_2_a%26b.PNG")
+```
+
+To start, I did the same as above, choosing to drop_na and create a totalCT to add together the three tests from each artificial breeding site.
+```{r}
+d1_results <- d1 %>%
+  drop_na(`qPCR Replicate 1`) %>%
+  drop_na(`qPCR Replicate 2`) %>%
+  drop_na(`qPCR Replicate 3`)
+#creation of totalCT column
+d1_results $`qPCR Replicate 1` <- as.numeric(d1_results$`qPCR Replicate 1`)
+d1_results$`qPCR Replicate 2` <- as.numeric (d1_results$`qPCR Replicate 2`)
+d1_results$`qPCR Replicate 3` <- as.numeric (d1_results$`qPCR Replicate 3`)
+d1_results$totalCT <- ((d1_results$`qPCR Replicate 1` + d1_results$`qPCR Replicate 2` + d1_results$`qPCR Replicate 3`) / 3 )
+```
+
+After pairing it down, I need to separate the data into two data frames by species. The mean and CI of each larval density is reported by species. 
+```{r}
+d1_steph <- filter (d1_results, Species=="stephensi")
+d1_aeg <- filter (d1_results, Species=="aegypti")
+```
+
+Now I can calculate the mean, sd, and se for both dataframes. I start with the *An. stephensi*
+
+```{r}
+#This code creates the summary table that includes the mean, standard deviation (sd) and standard error (se).
+d1s_sum <- d1_steph %>% 
+  group_by(`# Larvae`) %>% 
+  summarize (n = n(),
+    mean= mean(totalCT),
+     sd= sd(totalCT),
+    se = sd/sqrt(n))
+
+d1s_sum <- d1s_sum %>%
+  mutate_if(is.numeric, signif, digits=4) 
+
+d1s_sum
+```
+
+Now we do the same for *Ae. aegypti*
+
+```{r}
+#This code creates the summary table that includes the mean, standard deviation (sd) and standard error (se).
+d1a_sum <- d1_aeg %>% 
+  group_by(`# Larvae`) %>% 
+  summarize (n = n(),
+    mean= mean(totalCT),
+     sd= sd(totalCT),
+    se = sd/sqrt(n))
+
+d1a_sum <- d1a_sum %>%
+  mutate_if(is.numeric, signif, digits=4) 
+
+d1a_sum
+```
+
+The means for both species match the means reported on the publication!
+
+Now, we will again take out CI calculations for each:
+
+```{r}
+d1s_CI <- d1s_sum %>% 
+   reframe (n = n(),
+              ci <- mean + c(-1, 1) * qnorm(1 - alpha/2) * se, .by=`# Larvae`)
+
+d1s_CI
+
+d1a_CI <- d1a_sum %>% 
+   reframe (n = n(),
+              ci <- mean + c(-1, 1) * qnorm(1 - alpha/2) * se, .by=`# Larvae`)
+
+d1a_CI
+```
+
+Again, the CI values are slightly off of the reported values in the paper. The additional methods tried with d3 were tried for this, again without any values matching the reported values. 
+
+Let us do graphs!Again, it is going to be pretty close to the d3 work. We will use ggplot.There are some changes. Although this data can be represented continuously, it looks more clear (and matches the publication better) to group it discretely/nonlinearly. Thus, we use `scale_x_discrete()` to space out the data and label each mark with the number of Larvae. Additionally, I had to put `# Larvae` as a factor, rather than as data, to allow the data to be spaced out more evenly. 
+```{r}
+d1splot <- ggplot (data=d1s_sum, aes (x= as.factor(`# Larvae`), y= mean, fill= `# Larvae`)) + geom_col() + xlab ("Number of Larvae") + ylab ("Ct Value") + scale_x_discrete(labels=c('1', '2', '4', '8', '16', '32')) + geom_errorbar(aes(x=as.factor(`# Larvae`), ymin=mean-sd, ymax=mean+sd), width=0.2, colour="black", size=1.3) + theme_classic()
+
+d1aplot <- ggplot (data=d1a_sum, aes (x=as.factor(`# Larvae`), y= mean, fill= `# Larvae`)) + geom_col() + xlab ("Number of Larvae") + ylab ("Ct Value") + scale_x_discrete(labels=c('1', '2', '4', '8', '16', '32')) + geom_errorbar(aes(x=as.factor(`# Larvae`), ymin=mean-sd, ymax=mean+sd), width=0.2, colour="black", size=1.3) + theme_classic()
+
+plot_grid (d1splot, d1aplot)
+```
+
+#### 2b) 1L (Experiment 2)
+```{r}
+#| echo: false
+#| out-width: 200px
+knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Fig%203_data.PNG")
+```
+```{r}
+#| echo: false
+#| out-width: 200px
+knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Fig%203.PNG")
+```
+
+For d2, results are a bit more complicated. You cannot simply filter out the NA here. In d3 and d1, the NA values could be filtered because they only existed in two situations: one, controls that should not detect any DNA; two, in tests that were past the last day any DNA was detected or in a test with no larvae. In this situation, however, certain samples are coming up as NA in similar conditions to ones that are not. For example, Test 1 of *An. stephensi* with one larva has results on two the qPCR replicates, but an NA on the third. So to begin, we will change all NAs to 0s. First, we will use `select()` to get rid of the column `Fluor` since we will not use that data, and the NAs in it are causing issues in the code. 
+
+```{r}
+d2_results <- d2 %>%
+  select(`# Larvae`, `Volume of Water (ml)`, `Hours in Water`, `qPCR Replicate 1`, `qPCR Replicate 2`, `qPCR Replicate 3`, Species) 
+
+#change character to numeric
+d2_results $`qPCR Replicate 1` <- as.numeric(d2_results$`qPCR Replicate 1`)
+d2_results$`qPCR Replicate 2` <- as.numeric (d2_results$`qPCR Replicate 2`)
+d2_results$`qPCR Replicate 3` <- as.numeric (d2_results$`qPCR Replicate 3`)
+
+# Now to change na to 0
+d2_results[is.na(d2_results)] <-0 
+
+# Now create totalCT column
+d2_results$totalCT <- ((d2_results$`qPCR Replicate 1` + d2_results$`qPCR Replicate 2` + d2_results$`qPCR Replicate 3`) / 3 )
+```
+
+After pairing it down, I need to separate the data into three data frames by species (one for each individually, then one for both). The mean and CI of each larval density is reported by species, but this experiment also featured two sets of mixed artificial breeding sites. 
+```{r}
+d2_steph <- filter (d2_results, Species=="stephensi")
+d2_aeg <- filter (d2_results, Species=="aegypti")
+d2_both <- filter (d2_results, Species=="both")
+```
+
+They report the values for the artificial breeding sites containing both differently, so we will focus first on the two individual species. 
+
+```{r}
+#stephensi
+d2s_sum <- d2_steph %>% 
+  group_by(`# Larvae`) %>% 
+  summarize (n = n(),
+    mean= mean(totalCT),
+     sd= sd(totalCT),
+    se = sd/sqrt(n))
+
+d2s_sum <- d2s_sum %>%
+  mutate_if(is.numeric, signif, digits=4) 
+
+d2s_sum
+```
+
+Unfortunately, at this point you will see that these codes do NOT match the publication. I believe the issue lies in part with the NA values. I had a feeling when inputting the zeroes that they would not work. Simply put, the lower a CT value, the more sensitive the primer for picking up traces of these species in the eDNA sample. Therefore, if the response is NA, the value should theoretically be higher, as lower numbers indicate better sensitivity. However, my attempts at simply dropping the NA were also not fruitful. Additionally, I tried calculating each larva number by hand, thinking that maybe I had to do those with NAs and those without differently, with no luck. 
+
+The publication also reports the CT values in the mixed species artificial breeding sites as one combined value in their data sheet, but as separate values in the publication. That is, there is one CT listed for each test at each combined mixed species site on the supplement containing their raw data, but the publications reports the mean by species at these mixed sites. 
+
+### 3) PCR primer testing and validation
+These graphs from the original publication show standard curves over a tendfold dilution series that detects *An. stephensi* and *Ae. aegypti*. The black circles represent are the middle two quartiles of standards with above 50% detection and are included in the calculation for linear regression. The points marked with blue pluses are outside the middle two quartiles or represent standards with <50% detection and were not included in calculations. 
+```{r}
+#| echo: false
+#| out-width: 200px
+knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/supplement_fig_1_a%26b.png")
+```
+```{r}
+#| echo: false
+#| out-width: 200px
+knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/supplement_fig_1_c.png")
+```
+
+**REPLICATE IT HERE**
+
+
+
+## Summary/Discussion
+
+[Narrative section that overviews how successful were you at replicating the analyses and visualizations in the study. What problems did you encounter? Why might you have encountered those problems? What details were lacking from the original study's methods that might have hampered your ability to replicate the authors' results?]
+
+## References
+
+[Include the citation for your paper, plus any other literature you might reference.]
