@@ -1,0 +1,43 @@
+Test Replicate #,# Larvae,Volume of Water (ml),Hours in Water,qPCR Replicate 1,qPCR Replicate 2,qPCR Replicate 3,Species
+1,0,50,24,No Ct,No Ct,No Ct,stephensi
+1,1,50,24,32.56,32.31,32.84,stephensi
+1,2,50,24,32.34,30.32,29.6,stephensi
+1,4,50,24,26.52,25.1,24.5,stephensi
+1,8,50,24,28.66,27.81,27.76,stephensi
+1,16,50,24,21.41,20.35,20.84,stephensi
+1,32,50,24,21.44,21.28,20.24,stephensi
+2,0,50,24,No Ct,No Ct,No Ct,stephensi
+2,1,50,24,31.62,31.33,30.96,stephensi
+2,2,50,24,26.82,26.1,20.06,stephensi
+2,4,50,24,27.6,26.4,27.04,stephensi
+2,8,50,24,25.42,24.35,24.62,stephensi
+2,16,50,24,22.44,21.46,21.7,stephensi
+2,32,50,24,23.52,20.34,21.14,stephensi
+3,0,50,24,No Ct,No Ct,No Ct,stephensi
+3,1,50,24,32.6,31.19,31.58,stephensi
+3,2,50,24,26.82,27.14,27.01,stephensi
+3,4,50,24,28.66,27.39,27.46,stephensi
+3,8,50,24,24.11,23.18,22.86,stephensi
+3,16,50,24,23.95,23.12,22.36,stephensi
+3,32,50,24,21.59,20.06,19.45,stephensi
+1,0,50,24,No Ct,No Ct,No Ct,aegypti
+1,1,50,24,39.91,35.4,34.99,aegypti
+1,2,50,24,26.29,26.86,26.88,aegypti
+1,4,50,24,30.63,29.43,29.2,aegypti
+1,8,50,24,28.39,27.3,26.79,aegypti
+1,16,50,24,27.71,24.91,23.95,aegypti
+1,32,50,24,24,22.64,22.9,aegypti
+2,0,50,24,No Ct,No Ct,No Ct,aegypti
+2,1,50,24,34.13,31.15,34.99,aegypti
+2,2,50,24,33.5,31.26,26.88,aegypti
+2,4,50,24,30.28,27.07,29.2,aegypti
+2,8,50,24,32.59,30.44,26.79,aegypti
+2,16,50,24,28.69,25.58,23.95,aegypti
+2,32,50,24,26.93,23.61,22.9,aegypti
+3,0,50,24,No Ct,No Ct,No Ct,aegypti
+3,1,50,24,33,30.29,29.07,aegypti
+3,2,50,24,30.22,30.12,30,aegypti
+3,4,50,24,30.95,29.44,28.68,aegypti
+3,8,50,24,28.03,25.21,25.13,aegypti
+3,16,50,24,29.86,27.1,26.99,aegypti
+3,32,50,24,29.15,27.85,27.83,aegypti
