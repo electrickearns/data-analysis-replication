@@ -4,16 +4,22 @@ author: "Amber Kearns"
 date: "April 8"
 editor: source
 ---
+```{r setup}
+knitr::opts_chunk$set(fig.path = "https://github.com/electrickearns/data-analysis-replication/tree/main/images")
+```
 
 ## Preliminaries
 
 Before beginning this project, run the following chunks:
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # the following list of packages will need to be activated for this project
 library(tidyverse)
 library(knitr)
 library(skimr)
 library (cowplot)
+library (scales)
+library (ggpubr)
+library (ggpmisc)
 ```
 
 ## Introduction
@@ -429,14 +435,78 @@ knitr::include_graphics("https://github.com/electrickearns/data-analysis-replica
 knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/supplement_fig_1_c.png")
 ```
 
-**REPLICATE IT HERE**
+The first step is looking at the raw data and separating it into three dataframes: one from a serial dilution of *An. stephensi*, one from a serial dilution of *Ae. aegypti* and one for a combined dilution of both. The third will then be split again by species. This is not as simple as filtering by species at the beginning, even though all graphs are filtered by species, because doing so would combine the results of the, for example, individual *An. stephensi* concentrations with the concentrations of *An. stephensi* in the combined tests. Luckily, the type of test has been recorded in such a way that each test is marked with different `Fluor` values, making separation much more streamlined
 
+```{r}
+# drop NA values for levels where no CT detected
+s <- s %>%
+  drop_na(Cq) 
+
+# individual, isolated tests
+ds_steph <- filter (s, Fluor=="HEX")
+ds_aeg <- filter (s, Fluor=="FAM")
+
+#combined, but separated by species
+dscom_steph <- filter (s, Fluor=="HEX (STH)")
+dscom_aeg <- filter (s, Fluor=="FAM (AE)")
+```
+
+At this point, we are going to focus on replicating the graphs, rather than the data. The dara will come after. We'll show how to recreate the isolated *An. stephensi* for Suppl. Fig. A, and then encourage that process to be done for the other three.
+
+To begin, we want to map a standard scatter plot of the values. The {scales} package is necessary to change the x-axis to an exponential scale. After fighting to get the graph to stop showing every individual value as a y-value, I realized I had to set my x and y values as numeric; they were again coming in as characters/factors.
+Unfortunately, changing the actual numbers on the x-axis primarily, and a bit on the y-axis, to more closely match their graph gave me some trouble. 
+
+```{r}
+plotA <- ggplot (data=ds_steph, aes (x= as.numeric(SQ), y= as.numeric(Cq))) + geom_point() + xlab ("Standard Concentrations (Copies/Reaction)") + ylab ("Ct Value") +  scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+              labels = trans_format("log10", math_format(10^.x))) 
+
+plotA
+```
+
+Now to plot the line of best fit:
+
+```{r}
+plotA <- plotA + geom_smooth(method=lm)
+plotA
+```
+
+This seems to be looking good until you compare it with the publication and read the explanation: "Points drawn with black circles are the middle two quartiles of standards with ≥50% detection and are included in the linear regression calculations. Points drawn with blue pluses (+) are outside the middle two quartiles or for standards with <50% detection and are not included in the linear regression calculations." Comparing this somewhat confusing explanation with the graph shows the issue with our graph: the authors have chosen to graph and include in calculations for the line of best fit only the middle option, not the mean, of the three numbers for each concentration. 
+
+The best way to handle this seemed to be to create a **New** dataframe that would allow me to graph the points separately:
+```{r}
+#I chose to represent the median as 1 and the not median as 0
+ds_steph$med <- c(1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,0,1,0)
+```
+
+Now we can change the dots in the graph to be colored by whether they are or are not the median.For this, you need the {ggpubr} package! We basically have it group by factor 1(median) or 0 (no median) by shape and color. Additionally, we tell the `geom_smooth` function to only consider points that have a 1 in the med column. 
+```{r}
+plotA2 <- ggplot (data=ds_steph, aes (x= as.numeric(SQ), y= as.numeric(Cq), shape= as.factor(med), color= as.factor(med))) + geom_point() + xlab ("Standard Concentrations (Copies/Reaction)") + ylab ("Ct Value") +  scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x))) + scale_shape_manual(values = c(3, 16)) +
+  scale_color_manual(values = c("blue", "black")) + geom_smooth (method=lm, aes(group=2))
+
+plotA2
+```
+
+This gives a graph that more closely matches the one in publication! Finally, we will use the `stat_poly_eq` function from {ggpmisc} to add the calculations for rsquared, intercept, and slope to the graph:
+
+```{r}
+plotA2 + stat_poly_eq(use_label(c("eq", "R2")))
+```
+
+They match the publication!
+For time and brevity, I will not repeat this process with each of the data frames, but it remains the same for each iteration!
 
 
 ## Summary/Discussion
 
-[Narrative section that overviews how successful were you at replicating the analyses and visualizations in the study. What problems did you encounter? Why might you have encountered those problems? What details were lacking from the original study's methods that might have hampered your ability to replicate the authors' results?]
+Overall, I think I had moderate success at replicating the analysis and visualizations in this study. I was able to completely replicate the graphs of standard curves from the testing of the primer and the rsquared, intercept, and slope values, as well as the reported means for experiments one and two. 
+There were definite issues. Some were likely a result of my own lack of ability to come up with more ways to troubleshoot the numbers, but some seem to be a lack of reporting. Despite consistently getting the correct reported means in experiments 1, 2, and 3, I was unable to find the right CI, even with multiple attempts at different methods of calculation. I was able to likely narrow down my issue to being an incorrect standard deviation, but I lacked the ability to figure out *why* it was incorrect. 
+
+Additionally, in experiment 2 I ran into an issue with lack of transparency in the data. In all other experiments, "No CT" was reported only in cases where no iteration of the test showed no CT. In experiment 2, the 1L artificial breeding site, there were "No CT" values among numerical values for the same amount (so, for example, 72 hours would have two numbers and one no CT). Discounting NAs/No CTs led to incorrect numbers, but so did replacing the NA/no CT with zero. Clearly during calculations something was done to account for these, but it was unclear what. In the same experiment, experiment 2, they did a combination artificial breeding site with both species, but reported the means and CT values for each species separately in the publication. Unfortunately, their data set reported them as one score, making it impossible to replicate the mean/CI for those experiments. 
+
 
 ## References
 
-[Include the citation for your paper, plus any other literature you might reference.]
+Kristan, M., Acford-Palmer, H., Campos, M.O. et al. Towards environmental detection, quantification, and molecular characterization of Anopheles stephensi and Aedes aegypti from experimental larval breeding sites. Sci Rep 13, 2729 (2023). https://doi.org/10.1038/s41598-023-29657-y
+
+Stack Overflow. (n.d.). https://stackoverflow.com/ 
+
