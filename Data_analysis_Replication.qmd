@@ -5,7 +5,7 @@ date: "April 8"
 editor: source
 ---
 ```{r setup}
-knitr::opts_chunk$set(fig.path = "https://github.com/electrickearns/data-analysis-replication/tree/main/images")
+knitr::opts_chunk$set(fig.path = "images/")
 ```
 
 ## Preliminaries
@@ -162,13 +162,13 @@ I will now replicate the data analytics done in this paper to the best of my abi
 In this section, the level of environmental eDNA degradation was measured.As in the above, they reported the numbers for mean and CI in text, and created a graph, and we will too. The experiment was done with three 1L artificial breeding sites with each containing 32 specimens in the pupa stage. 
 ```{r}
 #| echo: false
-#| out-width: 200px
-knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Figure%204_data.PNG")
+#| out-width: 600px
+knitr::include_graphics("images/Figure 4.PNG")
 ```
 ```{r}
 #| echo: false
-#| out-width: 200px
-knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Figure%204.PNG")
+#| out-width: 600px
+knitr::include_graphics("images/Figure 4_data.PNG")
 ```
 
 Our earlier exploration already started off the process by removing all "No Ct" observations and replacing them with NA; if you skipped this step, please go complete it now. 
@@ -273,13 +273,13 @@ These two experiments tested to see the CT, or cycle threshold, of both species 
 #### 2a) 50 ml (Experiment 1)
 ```{r}
 #| echo: false
-#| out-width: 200px
-knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Fig%202_data.PNG")
+#| out-width: 600px
+knitr::include_graphics("images/Fig_2_a&b.PNG")
 ```
 ```{r}
 #| echo: false
-#| out-width: 200px
-knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Fig_2_a%26b.PNG")
+#| out-width: 600px
+knitr::include_graphics("images/Fig 2_data.PNG")
 ```
 
 To start, I did the same as above, choosing to drop_na and create a totalCT to add together the three tests from each artificial breeding site.
@@ -367,13 +367,13 @@ plot_grid (d1splot, d1aplot)
 #### 2b) 1L (Experiment 2)
 ```{r}
 #| echo: false
-#| out-width: 200px
-knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Fig%203_data.PNG")
+#| out-width: 600px
+knitr::include_graphics("images/Fig 3.PNG")
 ```
 ```{r}
 #| echo: false
-#| out-width: 200px
-knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/Fig%203.PNG")
+#| out-width: 600px
+knitr::include_graphics("images/Fig 3_data.PNG")
 ```
 
 For d2, results are a bit more complicated. You cannot simply filter out the NA here. In d3 and d1, the NA values could be filtered because they only existed in two situations: one, controls that should not detect any DNA; two, in tests that were past the last day any DNA was detected or in a test with no larvae. In this situation, however, certain samples are coming up as NA in similar conditions to ones that are not. For example, Test 1 of *An. stephensi* with one larva has results on two the qPCR replicates, but an NA on the third. So to begin, we will change all NAs to 0s. First, we will use `select()` to get rid of the column `Fluor` since we will not use that data, and the NAs in it are causing issues in the code. 
@@ -426,13 +426,13 @@ The publication also reports the CT values in the mixed species artificial breed
 These graphs from the original publication show standard curves over a tendfold dilution series that detects *An. stephensi* and *Ae. aegypti*. The black circles represent are the middle two quartiles of standards with above 50% detection and are included in the calculation for linear regression. The points marked with blue pluses are outside the middle two quartiles or represent standards with <50% detection and were not included in calculations. 
 ```{r}
 #| echo: false
-#| out-width: 200px
-knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/supplement_fig_1_a%26b.png")
+#| out-width: 600px
+knitr::include_graphics("images/supplement_fig_1_a&b.PNG")
 ```
 ```{r}
 #| echo: false
 #| out-width: 200px
-knitr::include_graphics("https://github.com/electrickearns/data-analysis-replication/blob/main/images/supplement_fig_1_c.png")
+knitr::include_graphics("images/supplement_fig_1_c.PNG")
 ```
 
 The first step is looking at the raw data and separating it into three dataframes: one from a serial dilution of *An. stephensi*, one from a serial dilution of *Ae. aegypti* and one for a combined dilution of both. The third will then be split again by species. This is not as simple as filtering by species at the beginning, even though all graphs are filtered by species, because doing so would combine the results of the, for example, individual *An. stephensi* concentrations with the concentrations of *An. stephensi* in the combined tests. Luckily, the type of test has been recorded in such a way that each test is marked with different `Fluor` values, making separation much more streamlined
